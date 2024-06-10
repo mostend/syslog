@@ -18,7 +18,9 @@ type syslogField struct {
 	KeyPath  string
 	Host     string
 	Format   string
-	Port     string
+	TLSPort  int
+	TCPPort  int
+	UDPPort  int
 	PeerName string
 }
 
@@ -56,23 +58,44 @@ func main() {
 	server.SetFormat(RFC["RFC3164"])
 	server.SetHandler(handler)
 
-	cer, err := tls.LoadX509KeyPair(syslogField.CertPath, syslogField.KeyPath)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	config := &tls.Config{Certificates: []tls.Certificate{cer}}
-
-	address := fmt.Sprintf("%s:%s", syslogField.Host, syslogField.Port)
-
-	server.ListenTCPTLS(address, config)
-
 	server.SetTlsPeerNameFunc(func(tlsConn *tls.Conn) (tlsPeer string, ok bool) {
 		if len(tlsConn.ConnectionState().PeerCertificates) < 1 {
 			return syslogField.PeerName, true
 		}
 		return tlsConn.ConnectionState().PeerCertificates[0].Subject.CommonName, true
 	})
+
+	if syslogField.TCPPort >= 1 && syslogField.TCPPort <= 65535 {
+		address := fmt.Sprintf("%s:%d", syslogField.Host, syslogField.TCPPort)
+		server.ListenTCP(address)
+	} else {
+		log.Println("Invalid TCP port, 1~65535")
+	}
+
+	if syslogField.UDPPort >= 1 && syslogField.UDPPort <= 65535 {
+		address := fmt.Sprintf("%s:%d", syslogField.Host, syslogField.UDPPort)
+		server.ListenUDP(address)
+	} else {
+		log.Println("Invalid UDP port, 1~65535")
+	}
+
+	if syslogField.CertPath != "" && syslogField.KeyPath != "" {
+		if syslogField.TLSPort >= 1 && syslogField.TLSPort <= 65535 {
+			address := fmt.Sprintf("%s:%d", syslogField.Host, syslogField.TLSPort)
+			cer, err := tls.LoadX509KeyPair(syslogField.CertPath, syslogField.KeyPath)
+			if err != nil {
+				log.Println("Can not find certs,", err)
+				return
+			}
+			config := &tls.Config{Certificates: []tls.Certificate{cer}}
+			server.ListenTCPTLS(address, config)
+		} else {
+			log.Println("Invalid UDP port, 1~65535")
+		}
+	} else {
+		log.Println("Invalid TLS/SSL certificate!")
+	}
+
 	server.Boot()
 
 	fileName := fmt.Sprintf("syslog_%s.log", time.Now().Format("2006-01-02-15-04-05"))

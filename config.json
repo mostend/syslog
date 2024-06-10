@@ -3,6 +3,8 @@
     "KeyPath": "./certs/key.pem",
     "Host": "0.0.0.0",
     "Format": "RFC3164",
-    "Port": "6514",
-    "PeerName": "neoros"
+    "TLSPort": 6514,
+    "TCPPort": 514,
+    "UDPPort": 514,
+    "PeerName": ""
 }
