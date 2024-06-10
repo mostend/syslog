@@ -55,7 +55,7 @@ func main() {
 	handler := syslog.NewChannelHandler(channel)
 
 	server := syslog.NewServer()
-	server.SetFormat(RFC["RFC3164"])
+	server.SetFormat(RFC[syslogField.Format])
 	server.SetHandler(handler)
 
 	server.SetTlsPeerNameFunc(func(tlsConn *tls.Conn) (tlsPeer string, ok bool) {
