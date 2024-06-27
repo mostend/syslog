@@ -97,6 +97,7 @@ func main() {
 	}
 
 	server.Boot()
+	defer server.Kill()
 
 	fileName := fmt.Sprintf("syslog_%s.log", time.Now().Format("2006-01-02-15-04-05"))
 	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
